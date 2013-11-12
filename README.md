@@ -36,12 +36,15 @@ Assumptions behind the model:
 The core algorithm for the simulation is written in c (using the c99 standard).
 The simulation is written as a library, with the interface described in
 coherentmc.h.  The library is compiled into a shared object, which can be
-accessed however you like.  I provide a nice python wrapper (that contains more
-details about the underlying c functions) that uses ctypes to access the
-library.  The library abstracts away the calling process into two objects and
-two functions.  There is a Setup object, that describes the setup, and there is
-a Result object that contains the results of a simulation run.  There are two
-functions, a run function, and a run\_again. function.
+accessed however you like.  All of the core c-code is in the coherentmc
+subdirectory.
+
+I provide a nice python wrapper (that contains more details about the underlying
+c functions) that uses ctypes to access the library.  The library is in the root
+of the repo.  The library abstracts away the calling process into two
+objects and two functions.  There is a Setup object, that describes the setup,
+and there is a Result object that contains the results of a simulation run.
+There are two functions, a run function, and a run\_again. function.
 
 Some utility functions for working with the cmc module are contained in the
 cmcutils module.

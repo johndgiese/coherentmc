@@ -121,7 +121,7 @@ class Result(ct.Structure):
 
 
 
-libc = ct.cdll.LoadLibrary("./coherentmc.so")
+libc = ct.cdll.LoadLibrary("./coherentmc/coherentmc.so")
 _run = libc.run
 _run.argtypes = [ct.POINTER(Setup), ct.POINTER(Result), ct.c_int, ct.c_double]
 _run.restype = ct.c_void_p

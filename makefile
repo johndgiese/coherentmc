@@ -1,33 +1,20 @@
-SHELL=/bin/sh
+SHELL = /bin/bash
 .SUFFIXES:
 
-CC=gcc
-CFLAGS=-c -Wall -pedantic -ansi -std=c99 -fPIC
-LDFLAGS=-lm
-
-SOURCES=coherentmc.c a2c.c a4d.c
-PREPROCESSED=$(SOURCES:.c=.i)
-OBJECTS=$(SOURCES:.c=.o)
-SHAREDOBJECT=coherentmc.so
+MAKE = make
+SUBPROJECTS = coherentmc
 
 
-all: $(SOURCES) $(SHAREDOBJECT)
+all: $(SUBPROJECTS)
 
-$(SHAREDOBJECT): $(OBJECTS)
-	$(CC) -shared -o $@ $(OBJECTS) $(LDFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) $< -o $@
-
-
-
-preprocess: $(PREPROCESSED)
-
-%.i: %.c
-	$(CC) $(CFLAGS) $< -E -o $@
+.PHONY: $(SUBPROJECTS)
+$(SUBPROJECTS):
+	$(MAKE) -C $@
 
 
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(PREPROCESSED) $(SHAREDOBJECT)
+	for PROJ in $(SUBPROJECTS); do \
+		$(MAKE) -C $$PROJ clean; \
+	done
 
