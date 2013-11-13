@@ -3,9 +3,9 @@ import cmcutils
 
 
 if __name__ == "__main__":
-    nx = 5
-    ny = 4
-    nz = 3
+    nx = 500
+    ny = 20
+    nz = 20
     index = 1.4
     wavelength = 100e-6
 
@@ -14,14 +14,7 @@ if __name__ == "__main__":
     scatterer_positions = cmcutils.random_scatterer_positions(nx, ny, nz)
     setup = cmc.Setup(scatterer_positions, index)
 
-    print(setup.scatterer_positions)
-
     result = cmc.run(setup, np, wavelength)
-    print(result.np)
-    cmc.run_again(setup, result, np)
-    print(result.np)
 
-    print(result.reflectance)
-    print(result.transmission)
 
 

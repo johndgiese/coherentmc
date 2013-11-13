@@ -2,10 +2,10 @@ SHELL = /bin/bash
 .SUFFIXES:
 
 CC = gcc
-CFLAGS = -c -Wall -pedantic -ansi -std=c99 -fPIC
+CFLAGS = -c -Wall -pedantic -ansi -std=c99 -fPIC -DDSFMT_MEXP=19937 
 LDFLAGS = -lm
 
-SOURCES = coherentmc.c a2c.c a4d.c
+SOURCES = coherentmc.c a2c.c a4d.c dSFMT/dSFMT.c random.c
 PREPROCESSED = $(SOURCES:.c=.i)
 OBJECTS = $(SOURCES:.c=.o)
 SHAREDOBJECT = coherentmc.so
@@ -19,6 +19,8 @@ $(SHAREDOBJECT): $(OBJECTS)
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
+dSFMT/dSFMT.o: dSFMT/dSFMT.c
+	$(CC) $(CFLAGS) -O3 -DHAVE_SSE2 $< -o $@
 
 
 preprocess: $(PREPROCESSED)
