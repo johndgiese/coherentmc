@@ -14,10 +14,10 @@ void random_close(void);
 double random_double(void);
 
 // Calculate two random angles (in radians) generated from a uniform
-// distribution on the sphere. The first argument is the angle between the
-// +z-axis and the sample, the second argument is the angle (in the x-y plane)
-// measured counter-clockwise from the positive x-axis.
-void random_direction(double *phi, double*psi);
+// distribution on the sphere. The first argument is the angle (in the x-y plane)
+// measured counter-clockwise from the positive x-axis. The second argument is
+// the angle between the +z-axis and the sample. 
+void random_direction(double *theta, double*phi);
 
 // Calculate a number following a negative exponential distribution with mean
 // one.

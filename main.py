@@ -1,9 +1,12 @@
 import cmc
 import cmcutils
 
+from pylab import *
+import mymath
+
 
 if __name__ == "__main__":
-    nx = 500
+    nx = 50
     ny = 20
     nz = 20
     index = 1.4
@@ -17,4 +20,16 @@ if __name__ == "__main__":
     result = cmc.run(setup, np, wavelength)
 
 
+    theta = real(result.transmission.reshape(nx*ny))
+    phi = imag(result.transmission.reshape(nx*ny))
+    sphi = sin(phi)
+
+    x = cos(theta)*sphi
+    y = sin(theta)*sphi
+    z = cos(phi)
+
+    mymath.scatter3(x, y, z)
+    show()
+
+    
 

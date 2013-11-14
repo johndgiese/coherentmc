@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <tgmath.h>
+#include <math.h>
 #include <inttypes.h>
 
 #include "./dSFMT/dSFMT.h"
@@ -58,14 +59,14 @@ double random_double(void) {
 }
 
 
-void random_direction(double *phi, double*psi) {
-    *phi = random_double();
-    *psi = random_double();
+void random_direction(double *theta, double*phi) {
+    *theta = 2*M_PI*random_double();
+    *phi = acos(2*random_double() - 1);
 }
 
 
 void random_distance(double *distance) {
-    *distance = random_double();
+    *distance = -log(random_double());
 }
 
 #endif // RANDOM_H
