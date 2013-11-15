@@ -10,22 +10,28 @@
 #include "a2c.h"
 #include "random.h"
 
+typedef struct {
+    double position[3];
+    double distance;
+} Photon;
 
+Photon new_photon(Setup *setup);
+bool propagate_photon(Setup *setup, Photon *photon);
+void tally_result(Result *result, Photon photon, double wavelength);
+
+
+
+// The main function!
 void run(Setup *setup, Result *result, int np, double wavelength) {
 
     random_open(10, 2000);
-    double distance;
-    double theta, phi;
 
-    // just for debugging
-    for (int ix = 0; ix < setup->nx; ix++) {
-        for (int iy = 0; iy < setup->ny; iy++) {
-            random_direction(&theta, &phi);
-            a2c_set(result->reflectance, theta + I*phi, ix, iy);
+    double reduced_wavelength = wavelength/setup->index;
 
-            random_direction(&theta, &phi);
-            a2c_set(result->transmission, theta + I*phi, ix, iy);
-        }
+    for(int ip = 0; ip < np; ip++) {
+        Photon p = new_photon(setup);
+        while(propagate_photon(setup, p));
+        tally_result(result, p, reduced_wavelength);
     }
 
     result->np += np;
@@ -33,3 +39,21 @@ void run(Setup *setup, Result *result, int np, double wavelength) {
     random_close();
 }
 
+
+
+// For now, assume photon is centered at the origin, and is launched in the +z
+// direction.  Also assume there is no ballistic light.
+Photon new_photon(Setup *setup) {
+    Photon p;
+    p.x = p.y = 0;
+    do {
+        p.z = p.distance = random_distance();
+    } while (p.z < setup->nz);
+    return p;
+}
+
+bool propagate_photon(Setup *setup, Photon *photon) {
+    double next_position[3];
+
+
+}
