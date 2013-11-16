@@ -25,7 +25,7 @@ void random_distance(double *distance);
 
 // Generate a random displacement
 // Generates a random direction and displacement, and then converts to
-// cartesian coordinats and rounds to the nearest integer.
-int[3] random_displacement(void);
+// Cartesian coordinates
+double[3] random_displacement(void);
 
 #endif // RANDOM_H
