@@ -8,7 +8,7 @@
 
 #include "./dSFMT/dSFMT.h"
 
-#include "random.h"
+#include "randutils.h"
 void random_update_array(void);
 
 

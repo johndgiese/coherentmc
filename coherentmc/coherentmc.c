@@ -8,7 +8,7 @@
 #include "coherentmc.h"
 #include "a4d.h"
 #include "a2c.h"
-#include "random.h"
+#include "randutils.h"
 
 typedef struct {
     double r_prev[3];
@@ -21,13 +21,13 @@ typedef struct {
     double pathlength;
 } Photon;
 
-Photon *new_photon(void);
-bool is_ballistic(Setup *setup, Photon *p);
-bool propagate_photon(Setup *setup, Photon *p);
-bool handle_wrapping(Setup *setup, Photon *p);
-void tally_diffuse_photon(Result *result, Photon *p, double wavelength);
-void tally_ballistic_photon(Result *result, Photon *p, double wavelength);
-double distance(double a[3], double b[3]);
+static inline Photon *new_photon(void);
+static inline bool is_ballistic(Setup *setup, Photon *p);
+static inline bool propagate_photon(Setup *setup, Photon *p);
+static inline bool handle_wrapping(Setup *setup, Photon *p);
+static inline void tally_diffuse_photon(Result *result, Photon *p, double wavelength);
+static inline void tally_ballistic_photon(Result *result, Photon *p, double wavelength);
+static inline double distance(double a[3], double b[3]);
 
 #define DEBUG
 
@@ -41,7 +41,6 @@ double distance(double a[3], double b[3]);
     #define DPRINT_D(str) ;
 #endif
     
-
 
 // run the coherent monte carlo simulation
 void run(Setup *setup, Result *result, int np, double wavelength) {
@@ -70,13 +69,13 @@ void run(Setup *setup, Result *result, int np, double wavelength) {
 
 
 // Did the photon pass through the sample without scattering at all?
-bool is_ballistic(Setup *setup, Photon *p) {
+static inline bool is_ballistic(Setup *setup, Photon *p) {
     return p->r[2] > setup->nz;
 }
 
 
 // Assume photon is centered at the origin, and is launched in the +z-direction.
-Photon *new_photon(void) {
+static inline Photon *new_photon(void) {
     Photon* p = (Photon*) malloc(sizeof(Photon));
 
     // TODO: generalize
@@ -94,7 +93,7 @@ Photon *new_photon(void) {
 }
 
 
-bool handle_wrapping(Setup *setup, Photon *p) {
+static inline bool handle_wrapping(Setup *setup, Photon *p) {
 
     // calculate how many times each photon wraps around the boundary conditions
     // the simulation should be setup to avoid multiple wrap arounds, however
@@ -113,7 +112,7 @@ bool handle_wrapping(Setup *setup, Photon *p) {
 }
 
 
-bool propagate_photon(Setup *setup, Photon *p) {
+static inline bool propagate_photon(Setup *setup, Photon *p) {
 
     // keep a record of the previous location
     p->r_prev[0] = p->r[0];
@@ -171,7 +170,7 @@ bool propagate_photon(Setup *setup, Photon *p) {
 }
 
 
-void tally_diffuse_photon(Result *result, Photon *p, double wavelength) {
+static inline void tally_diffuse_photon(Result *result, Photon *p, double wavelength) {
     // for debugging
     if (p->r[2] == 0) {
         a2c_plus_set(result->reflectance, 1 + I*p->pathlength, 0, 0);
@@ -181,13 +180,13 @@ void tally_diffuse_photon(Result *result, Photon *p, double wavelength) {
 }
 
 
-void tally_ballistic_photon(Result *result, Photon *p, double wavelength) {
+static inline void tally_ballistic_photon(Result *result, Photon *p, double wavelength) {
     // for debugging
     a2c_plus_set(result->reflectance, 1, 1, 1);
 }
 
 
-double distance(double a[3], double b[3]) {
+static inline double distance(double a[3], double b[3]) {
     return sqrt(
         (a[0] - b[0])*(a[0] - b[0]) +
         (a[1] - b[1])*(a[1] - b[1]) +
