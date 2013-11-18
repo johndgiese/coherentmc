@@ -19,6 +19,7 @@
 
 # Python stuff
 *.py[co]
+env
 
 # IDE Stuff
 .idea
