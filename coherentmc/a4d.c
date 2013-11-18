@@ -77,3 +77,10 @@ void a4d_set(a4d *array, double val, int ix, int iy, int iz, int ic) {
     array->data[ix*ny*nz*nc + iy*nz*nc + iz*nc + ic] = val;
 }
 
+void a4d_plus_set(a4d *array, double val, int ix, int iy, int iz, int ic) {
+    int ny = array->ny;
+    int nz = array->nz;
+    int nc = array->nc;
+    array->data[ix*ny*nz*nc + iy*nz*nc + iz*nc + ic] += val;
+}
+

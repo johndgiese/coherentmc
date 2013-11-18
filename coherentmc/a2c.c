@@ -67,3 +67,9 @@ void a2c_set(a2c *array, complex double val, int ix, int iy) {
     int ny = array->ny;
     array->data[ix*ny + iy] = val;
 }
+
+void a2c_plus_set(a2c *array, complex double val, int ix, int iy) {
+    int ny = array->ny;
+    array->data[ix*ny + iy] += val;
+}
+

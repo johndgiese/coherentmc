@@ -21,11 +21,11 @@ void random_direction(double *theta, double*phi);
 
 // Calculate a number following a negative exponential distribution with mean
 // one.
-void random_distance(double *distance);
+double random_distance(void);
 
 // Generate a random displacement
 // Generates a random direction and displacement, and then converts to
 // Cartesian coordinates
-double[3] random_displacement(void);
+void random_displacement(double displacement[3]);
 
 #endif // RANDOM_H

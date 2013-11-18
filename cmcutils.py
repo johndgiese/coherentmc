@@ -23,7 +23,7 @@ def random_scatterer_positions(nx, ny, nz):
     for ix in xrange(nx):
         for iy in xrange(ny):
             for iz in xrange(nz):
-                data[ix, iy, iz, 0] = ix
-                data[ix, iy, iz, 1] = iy
-                data[ix, iy, iz, 2] = iz
+                data[ix, iy, iz, 0] += ix
+                data[ix, iy, iz, 1] += iy
+                data[ix, iy, iz, 2] += iz
     return data

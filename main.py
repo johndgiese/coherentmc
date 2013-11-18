@@ -12,24 +12,12 @@ if __name__ == "__main__":
     index = 1.4
     wavelength = 100e-6
 
-    np = 100
+    np = 3000
 
     scatterer_positions = cmcutils.random_scatterer_positions(nx, ny, nz)
     setup = cmc.Setup(scatterer_positions, index)
-
     result = cmc.run(setup, np, wavelength)
 
+    result.transmittance
 
-    theta = real(result.transmission.reshape(nx*ny))
-    phi = imag(result.transmission.reshape(nx*ny))
-    sphi = sin(phi)
-
-    x = cos(theta)*sphi
-    y = sin(theta)*sphi
-    z = cos(phi)
-
-    mymath.scatter3(x, y, z)
-    show()
-
-    
 

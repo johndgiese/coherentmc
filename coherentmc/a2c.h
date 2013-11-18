@@ -22,6 +22,7 @@ int a2c_size(a2c *array);
 
 complex double a2c_get(a2c *array, int ix, int iy);
 void a2c_set(a2c *array, complex double val, int ix, int iy);
+void a2c_plus_set(a2c *array, complex double val, int ix, int iy);
 
 #endif // A2C_H
 

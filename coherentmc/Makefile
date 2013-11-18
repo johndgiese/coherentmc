@@ -22,6 +22,9 @@ $(SHAREDOBJECT): $(OBJECTS)
 dSFMT/dSFMT.o: dSFMT/dSFMT.c
 	$(CC) $(CFLAGS) -O3 -DHAVE_SSE2 $< -o $@
 
+random.so: $(OBJECTS)
+	$(CC) -shared -o $@ $(OBJECTS) $(LDFLAGS)
+
 
 preprocess: $(PREPROCESSED)
 

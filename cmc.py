@@ -102,7 +102,7 @@ class Result(ct.Structure):
         ("nx", ct.c_int),
         ("ny", ct.c_int),
         ("_reflectance", ct.POINTER(a2c)),
-        ("_transmission", ct.POINTER(a2c)),
+        ("_transmittance", ct.POINTER(a2c)),
         ("wavelength", ct.c_double),
         ("np", ct.c_int),
     ]
@@ -110,15 +110,15 @@ class Result(ct.Structure):
     def __init__(self, setup, wavelength):
         nx, ny, nz, nc = setup.scatterer_positions.shape
 
-        self.transmission = numpy.zeros((nx, ny), numpy.complex128)
-        transmission_data_ptr = self.transmission.ctypes.data_as(ct.POINTER(c_complex_double))
-        transmission = ct.pointer(a2c(nx, ny, transmission_data_ptr))
+        self.transmittance = numpy.zeros((nx, ny), numpy.complex128)
+        transmittance_data_ptr = self.transmittance.ctypes.data_as(ct.POINTER(c_complex_double))
+        transmittance = ct.pointer(a2c(nx, ny, transmittance_data_ptr))
 
         self.reflectance = numpy.zeros((nx, ny), numpy.complex128)
         reflectance_data_ptr = self.reflectance.ctypes.data_as(ct.POINTER(c_complex_double))
         reflectance = ct.pointer(a2c(nx, ny, reflectance_data_ptr))
 
-        super(Result, self).__init__(nx, ny, reflectance, transmission, wavelength, 0)
+        super(Result, self).__init__(nx, ny, reflectance, transmittance, wavelength, 0)
 
 
 
@@ -130,7 +130,7 @@ _run.restype = ct.c_void_p
 
 def run(setup, np, wavelength):
     """
-    Calculate the diffuse transmission and reflection through setup.
+    Calculate the diffuse transmittance and reflection through setup.
 
     Use np photon launches, and the specified wavelength.  Returns a result
     object.

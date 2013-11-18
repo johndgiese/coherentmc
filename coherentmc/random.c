@@ -65,20 +65,23 @@ void random_direction(double *theta, double*phi) {
 }
 
 
-void random_distance(double *distance) {
-    *distance = -log(random_double());
+double random_distance() {
+    return -log(random_double());
 }
 
-double[3] random_displacement(void) {
-    displacement double[3];
-    double r = -log(random_double());
+void random_displacement(double displacement[3]) {
+    // distance follows a negative exponential + 1
+    // the +1 minimizes how often the current cell is picked again
+    double r = -log(random_double()) + 1;
+
     double theta = 2*M_PI*random_double();
     double cos_phi = 2*random_double() - 1;
     double sin_phi = sqrt(1 - cos_phi*cos_phi);
+
+    // convert to cartesian coordinates
     displacement[0] = r*sin_phi*cos(theta);
     displacement[1] = r*sin_phi*sin(theta);
     displacement[2] = r*cos_phi;
-    return displacement;
 }
 
 #endif // RANDOM_H

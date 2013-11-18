@@ -16,15 +16,31 @@ typedef struct {
     int xi;
     int yi;
     int zi;
-    double distance;
+    int x_wrap_arounds;
+    int y_wrap_arounds;
+    double pathlength;
 } Photon;
 
-Photon *new_photon();
-bool is_ballistic(Setup *setup, Photon *photon);
-bool propagate_photon(Setup *setup, Photon *photon);
-void tally_diffuse_photon(Result *result, Photon *photon, double wavelength);
-void tally_ballistic_photon(Result *result, Photon *photon, double wavelength);
+Photon *new_photon(void);
+bool is_ballistic(Setup *setup, Photon *p);
+bool propagate_photon(Setup *setup, Photon *p);
+bool handle_wrapping(Setup *setup, Photon *p);
+void tally_diffuse_photon(Result *result, Photon *p, double wavelength);
+void tally_ballistic_photon(Result *result, Photon *p, double wavelength);
 double distance(double a[3], double b[3]);
+
+#define DEBUG
+
+#ifdef DEBUG
+    #define DPRINT(str) printf(#str "\n");
+    #define DPRINT_I(str) printf(#str " = %d\n", str);
+    #define DPRINT_D(str) printf(#str " = %g\n", str);
+#else
+    #define DPRINT(str) ;
+    #define DPRINT_I(str) ;
+    #define DPRINT_D(str) ;
+#endif
+    
 
 
 // run the coherent monte carlo simulation
@@ -34,11 +50,15 @@ void run(Setup *setup, Result *result, int np, double wavelength) {
     double reduced_wavelength = wavelength/setup->index;
 
     for(int ip = 0; ip < np; ip++) {
+        printf("\n\n");
+        DPRINT_I(ip);
         Photon *p = new_photon();
         if (not is_ballistic(setup, p)) {
+            DPRINT(not ballistic)
             while(propagate_photon(setup, p));
             tally_diffuse_photon(result, p, reduced_wavelength);
         } else {
+            DPRINT(ballistic)
             tally_ballistic_photon(result, p, reduced_wavelength);
         }
         free(p);
@@ -50,34 +70,64 @@ void run(Setup *setup, Result *result, int np, double wavelength) {
 
 
 // Did the photon pass through the sample without scattering at all?
-bool is_ballistic(Setup *setup, Photon *photon) {
-    return photon->r[2] > setup->nz;
+bool is_ballistic(Setup *setup, Photon *p) {
+    return p->r[2] > setup->nz;
 }
 
 
 // Assume photon is centered at the origin, and is launched in the +z-direction.
-Photon *new_photon() {
+Photon *new_photon(void) {
     Photon* p = (Photon*) malloc(sizeof(Photon));
 
     // TODO: generalize
     p->r_prev[0] = p->r_prev[1] = p->r_prev[2] = 0;
 
     p->r[0] = p->r[1] = 0;
-    p->r[2] = p->distance = random_distance();
+    p->r[2] = random_distance();
+    p->pathlength = distance(p->r, p->r_prev);
+
+    p->xi = p->yi = 0;
+    p->zi = lround(p->r[2]);
+
+    p->x_wrap_arounds = p-> y_wrap_arounds = 0;
     return p;
 }
 
 
-bool propagate_photon(Setup *setup, Photon *photon) {
+bool handle_wrapping(Setup *setup, Photon *p) {
+
+    // calculate how many times each photon wraps around the boundary conditions
+    // the simulation should be setup to avoid multiple wrap arounds, however
+    // the code "properly" handles it anyay
+    p->x_wrap_arounds = p->xi/setup->nx + (p->xi < 0 ? -1 : 0);
+    p->y_wrap_arounds = p->yi/setup->ny + (p->yi < 0 ? -1 : 0);
+
+    bool is_wrapping = p->x_wrap_arounds != 0 or p->y_wrap_arounds != 0;
+
+    if (is_wrapping) {
+        // perform a true modulo
+        p->xi = (p->xi % setup->nx + setup->nx) % setup->nx;
+        p->yi = (p->yi % setup->ny + setup->ny) % setup->ny;
+    }
+    return is_wrapping;
+}
+
+
+bool propagate_photon(Setup *setup, Photon *p) {
 
     // keep a record of the previous location
-    photon->r_prev = photon->r;
+    p->r_prev[0] = p->r[0];
+    p->r_prev[1] = p->r[1];
+    p->r_prev[2] = p->r[2];
 
-    double displacement[3] = random_displacement();
-    double z_before_contstraining = displacement[2] + photon->r[2];
+    double displacement[3];
+    random_displacement(displacement);
+    double z_before_contstraining = displacement[2] + p->r[2];
 
     // DIFFUSE TRANSMISSION
     if (z_before_contstraining > setup->nz) {
+
+        DPRINT(Diffuse transmission)
 
         // TODO: force photon to lie on z=nz plane
         // TODO: handle wrap around
@@ -88,58 +138,54 @@ bool propagate_photon(Setup *setup, Photon *photon) {
     // DIFFUSE REFLECTION
     if (z_before_contstraining < 0) {
 
+        DPRINT(Diffuse reflection)
+
         // TODO: force photon to lie on z=0 plane
         // TODO: handle wrap around
         return false;
     }
 
+
     // REMAINS IN SAMPLE
 
-    // contstrain the displacement to a scatterer
-    photon->xi = (photon->xi + lround(displacement[0]));
-    photon->yi = (photon->yi + lround(displacement[1]));
-    photon->zi = (photon->zi + lround(displacement[2]));
+    // constrain the displacement to a scatterer position
+    p->xi += lround(displacement[0]);
+    p->yi += lround(displacement[1]);
+    p->zi += lround(displacement[2]);
+    handle_wrapping(setup, p);
+    double x_wrapped = a4d_get(setup->scatterer_positions, p->xi, p->yi, p->zi, 0);
+    double y_wrapped = a4d_get(setup->scatterer_positions, p->xi, p->yi, p->zi, 1);
+    double z_wrapped = a4d_get(setup->scatterer_positions, p->xi, p->yi, p->zi, 2);
+    p->r[0] = x_wrapped;
+    p->r[1] = y_wrapped;
+    p->r[2] = z_wrapped;
 
-    // keep track of wrap around boundaries
-    int wrap_arounds_x = photon->xi/setup->nx;
-    int wrap_arounds_y = photon->yi/setup->ny;
-    bool is_wrapping = wrap_arounds_x > 0 or wrap_arounds_y > 0;
-    if (is_wrapping) {
-        photon->xi %= setup->nx;
-        photon->yi %= setup->ny;
-    }
-
-    // update the position using the wrapped position
-    double r_wrapped[3] = setup->scatterer_positions->data[photon->xi][photon->yi][photon->zi];
-    photon->r[0] = r_wrapped[0];
-    photon->r[1] = r_wrapped[1];
-    photon->r[2] = r_wrapped[2];
-
-    // update the photon distance travelled using the unwrapped position
+    // update the photon's total pathlength travelled using the unwrapped position
     double r_unwrapped[3];
-    r_unwrapped[0] = r_wrapped[0] + wrap_arounds_x*setup->nx;
-    r_unwrapped[1] = r_wrapped[1] + wrap_arounds_y*setup->ny;
-    r_unwrapped[2] = r_wrapped[2];
-    photon->distance += distance(r_unwrapped, photon->r_prev);
+    r_unwrapped[0] = x_wrapped + p->x_wrap_arounds*setup->nx;
+    r_unwrapped[1] = y_wrapped + p->y_wrap_arounds*setup->ny;
+    r_unwrapped[2] = z_wrapped;
+    p->pathlength += distance(r_unwrapped, p->r_prev);
 
     return true;
 }
 
 
-void tally_diffuse_photon(Result *result, Photon *photon, double wavelength) {
+void tally_diffuse_photon(Result *result, Photon *p, double wavelength) {
     // for debugging
     if (p->r[2] == 0) {
-        result->reflection->data[0][0] += 1 + I*p->pathlength;
+        a2c_plus_set(result->reflectance, 1 + I*p->pathlength, 0, 0);
     } else {
-        result->transmission->data[0][0] += 1 + I*p->pathlength;
+        a2c_plus_set(result->transmission, 1 + I*p->pathlength, 0, 0);
     }
 }
 
 
-void tally_ballistic_photon(Result *result, Photon *photon, double wavelength) {
+void tally_ballistic_photon(Result *result, Photon *p, double wavelength) {
     // for debugging
-    result->reflection->data[1][1] += 1;
+    a2c_plus_set(result->reflectance, 1, 1, 1);
 }
+
 
 double distance(double a[3], double b[3]) {
     return sqrt(
