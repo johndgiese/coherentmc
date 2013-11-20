@@ -13,7 +13,7 @@
 typedef struct {
     double r_prev[3];
     double r[3];
-    double pathlength;
+    long double pathlength;
 } Photon;
 
 static inline Photon *new_photon(Setup *setup);
@@ -29,14 +29,19 @@ static inline int positive_mod(int x, int d);
     #define DPRINT(str) printf(#str "\n")
     #define DPRINT_INT(str) printf("%s = %d\n", #str, (str))
     #define DPRINT_DBL(str) printf("%s = %g\n", #str, (str))
+    #define DPRINT_LDB(str) printf("%s = %Lg\n", #str, (str))
     #define DPRINT_CDB(str) printf("%s = %g + %gI\n", #str, creal(str), cimag(str))
+    #define ASSERT(exp) assert(exp)
 #else
     #define DPRINT(str) ;
     #define DPRINT_INT(str) ;
     #define DPRINT_DBL(str) ;
+    #define DPRINT_LDB(str) ;
     #define DPRINT_CDB(str) ;
+    #define ASSERT(exp) ;
 #endif
     
+#define isbad(exp) (isnan(exp) or isinf(exp))
 
 // run the coherent monte carlo simulation
 void run(Setup *setup, Result *result, int np, double wavelength, int seed) {
@@ -44,20 +49,11 @@ void run(Setup *setup, Result *result, int np, double wavelength, int seed) {
     random_open(seed, 2000);
 
     for(int ip = 0; ip < np; ip++) {
-        DPRINT(\n);
-        DPRINT_INT(ip);
-
         Photon *p = new_photon(setup);
         if (not is_transmitted(setup, p)) {
             while(propagating_in_sample(setup, p));
         }
         tally_photon(setup, result, p, wavelength);
-
-        DPRINT_DBL(p->r[0]);
-        DPRINT_DBL(p->r[1]);
-        DPRINT_DBL(p->r[2]);
-        DPRINT_DBL(p->pathlength);
-
         free(p);
     }
 
@@ -80,6 +76,8 @@ static inline Photon *new_photon(Setup *setup) {
     p->r[2] = random_distance() + 1;
 
     p->pathlength = distance(p->r, p->r_prev);
+
+    ASSERT(not isbad(p->pathlength));
     return p;
 }
 
@@ -96,10 +94,13 @@ static inline bool is_reflected(Setup *setup, Photon *p) {
 
 static inline bool propagating_in_sample(Setup *setup, Photon *p) {
 
+    static long double pathlength_prev; // for debuging
+
     // KEEP A RECORD OF THE PREVIOUS LOCATION
     p->r_prev[0] = p->r[0];
     p->r_prev[1] = p->r[1];
     p->r_prev[2] = p->r[2];
+    pathlength_prev = p->pathlength;
 
     // GENERATE A RANDOM DISPLACEMENT
     double displacement[3];
@@ -134,21 +135,18 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
         yi = positive_mod(yi, setup->ny);
     }
 
-    assert(xi >= 0 and xi < setup->nx);
-    assert(yi >= 0 and yi < setup->ny);
-    assert(zi >= 0 and zi < setup->nz);
-    DPRINT_INT(xi);
-    DPRINT_INT(yi);
-    DPRINT_INT(zi);
+    ASSERT(xi >= 0 and xi < setup->nx);
+    ASSERT(yi >= 0 and yi < setup->ny);
+    ASSERT(zi >= 0 and zi < setup->nz);
     double x_wrapped = a4d_get(setup->scatterer_positions, xi, yi, zi, 0);
     double y_wrapped = a4d_get(setup->scatterer_positions, xi, yi, zi, 1);
     double z_wrapped = a4d_get(setup->scatterer_positions, xi, yi, zi, 2);
     p->r[0] = x_wrapped;
     p->r[1] = y_wrapped;
     p->r[2] = z_wrapped;
-    assert(not isnan(x_wrapped));
-    assert(not isnan(y_wrapped));
-    assert(not isnan(z_wrapped));
+    ASSERT(not isnan(x_wrapped));
+    ASSERT(not isnan(y_wrapped));
+    ASSERT(not isnan(z_wrapped));
 
     // CALCULATE PATHLENGTH, ACCOUNTING FOR WRAPPING
     if (is_wrapping) {
@@ -159,9 +157,6 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
         p->pathlength += distance(r_unwrapped, p->r_prev);
     } else {
         p->pathlength += distance(p->r, p->r_prev);
-    }
-    if(isnan(p->pathlength) or isinf(p->pathlength)) {
-        printf("x_wrap_arounds = %d\n y_wrap_arounds = %d\n", x_wrap_arounds, y_wrap_arounds);
     }
     return true;
 }
@@ -182,13 +177,9 @@ static inline void tally_photon(Setup *setup, Result *result, Photon *p, double 
     p->pathlength += distance(p->r, p->r_prev);
     double k = setup->index*2*M_PI/wavelength;
     complex double field_contribution = exp(-I*k*p->pathlength);
-    if (isnan(field_contribution)) {
-        printf("pathlength = %g, k = %g\n", p->pathlength, k);
-    }
+
     int xi = positive_mod(lround(p->r[0]), setup->nx);
     int yi = positive_mod(lround(p->r[1]), setup->ny);
-
-    DPRINT_CDB(field_contribution);
 
     if (photon_is_reflected) {
         a2c_plus_set(result->reflectance, field_contribution, xi, yi);
@@ -210,10 +201,6 @@ static inline double distance(double a[3], double b[3]) {
 static inline void interpolate_to_z(Photon *p, double zm) {
 
     double dz = abs((zm - p->r_prev[2])/(p->r[2] - p->r_prev[2]));
-
-    if(isnan(dz) or isinf(dz)) {
-        printf("dz = %g, z1 = %g, z0 = %g\n", dz, p->r[2], p->r_prev[2]);
-    }
 
     double dxdz = p->r[0] - p->r_prev[0];
     double dydz = p->r[1] - p->r_prev[1];

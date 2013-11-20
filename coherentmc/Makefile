@@ -1,8 +1,8 @@
 SHELL = /bin/bash
 .SUFFIXES:
 
-CC = gcc
-CFLAGS = -c -Wall -pedantic -ansi -std=c99 -fPIC -DDSFMT_MEXP=19937 
+CC = clang
+CFLAGS = -c -Wall -O3 -pedantic -ansi -std=c99 -fPIC -DDSFMT_MEXP=19937 
 LDFLAGS = -lm
 
 SOURCES = coherentmc.c a2c.c a4d.c dSFMT/dSFMT.c randutils.c
@@ -20,7 +20,7 @@ $(SHAREDOBJECT): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 dSFMT/dSFMT.o: dSFMT/dSFMT.c
-	$(CC) $(CFLAGS) -O3 -DHAVE_SSE2 $< -o $@
+	$(CC) $(CFLAGS) -DHAVE_SSE2 $< -o $@
 
 randutils.so: $(OBJECTS)
 	$(CC) -shared -o $@ $(OBJECTS) $(LDFLAGS)

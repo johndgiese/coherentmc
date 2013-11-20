@@ -45,11 +45,11 @@ void random_close(void) {
 
 // grab a new vector full of numbers (used internally)
 void random_update_array(void) {
-    dsfmt_gv_fill_array_close_open(rand_array, rand_array_size);
+    dsfmt_gv_fill_array_open_open(rand_array, rand_array_size);
 }
 
 
-// return a new random double
+// return a new random double in (0, 1)
 double random_double(void) {
     static int position = 0;
     double rand = rand_array[position];
