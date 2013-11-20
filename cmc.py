@@ -103,6 +103,8 @@ class Result(ct.Structure):
         ("ny", ct.c_int),
         ("_reflectance", ct.POINTER(a2c)),
         ("_transmittance", ct.POINTER(a2c)),
+        ("_incoherent_reflectance", ct.POINTER(a2c)),
+        ("_incoherent_transmittance", ct.POINTER(a2c)),
         ("wavelength", ct.c_double),
         ("np", ct.c_int),
     ]
@@ -118,7 +120,15 @@ class Result(ct.Structure):
         reflectance_data_ptr = self.reflectance.ctypes.data_as(ct.POINTER(c_complex_double))
         reflectance = ct.pointer(a2c(nx, ny, reflectance_data_ptr))
 
-        super(Result, self).__init__(nx, ny, reflectance, transmittance, wavelength, 0)
+        self.incoherent_transmittance = numpy.zeros((nx, ny), numpy.complex128)
+        incoherent_transmittance_data_ptr = self.incoherent_transmittance.ctypes.data_as(ct.POINTER(c_complex_double))
+        incoherent_transmittance = ct.pointer(a2c(nx, ny, incoherent_transmittance_data_ptr))
+
+        self.incoherent_reflectance = numpy.zeros((nx, ny), numpy.complex128)
+        incoherent_reflectance_data_ptr = self.incoherent_reflectance.ctypes.data_as(ct.POINTER(c_complex_double))
+        incoherent_reflectance = ct.pointer(a2c(nx, ny, incoherent_reflectance_data_ptr))
+
+        super(Result, self).__init__(nx, ny, reflectance, transmittance, incoherent_reflectance, incoherent_transmittance, wavelength, 0)
 
 
 

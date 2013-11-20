@@ -19,6 +19,8 @@ typedef struct {
     int ny;
     a2c *reflectance;
     a2c *transmittance;
+    a2c *incoherent_reflectance;
+    a2c *incoherent_transmittance;
     double wavelength;
     int np;
 } Result;
