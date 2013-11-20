@@ -74,7 +74,7 @@ double random_distance() {
 void random_displacement(double displacement[3]) {
     // distance follows a negative exponential + 1
     // the +1 minimizes how often the current cell is picked again
-    double r = -log(random_double()) + 1;
+    double r = -log(random_double()) + M_SQRT2;
 
     double theta = 2*M_PI*random_double();
     double cos_phi = 2*random_double() - 1;
