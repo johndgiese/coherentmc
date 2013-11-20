@@ -25,8 +25,6 @@ static inline double distance(double a[3], double b[3]);
 static inline void interpolate_to_z(Photon *p, double zm);
 static inline int positive_mod(int x, int d);
 
-#define DEBUG
-
 #ifdef DEBUG
     #define DPRINT(str) printf(#str "\n")
     #define DPRINT_INT(str) printf("%s = %d\n", #str, (str))
@@ -46,15 +44,20 @@ void run(Setup *setup, Result *result, int np, double wavelength, int seed) {
     random_open(seed, 2000);
 
     for(int ip = 0; ip < np; ip++) {
-        Photon *p = new_photon(setup);
         DPRINT(\n);
         DPRINT_INT(ip);
-        while(propagating_in_sample(setup, p));
+
+        Photon *p = new_photon(setup);
+        if (not is_transmitted(setup, p)) {
+            while(propagating_in_sample(setup, p));
+        }
         tally_photon(setup, result, p, wavelength);
+
         DPRINT_DBL(p->r[0]);
         DPRINT_DBL(p->r[1]);
         DPRINT_DBL(p->r[2]);
         DPRINT_DBL(p->pathlength);
+
         free(p);
     }
 
@@ -71,7 +74,12 @@ static inline Photon *new_photon(Setup *setup) {
     p->r[0] = setup->nx/2.0;
     p->r[1] = setup->ny/2.0;
     p->r[2] = 0.0;
-    p->pathlength = 0.0;
+
+    p->r[0] = setup->nx/2.0;
+    p->r[1] = setup->ny/2.0;
+    p->r[2] = random_distance() + 1;
+
+    p->pathlength = distance(p->r, p->r_prev);
     return p;
 }
 
@@ -107,8 +115,8 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
     }
 
     // OTHERWISE CONSTRAIN THE DISPLACEMENT TO A SCATTERER POSITION
-    int xi = lround(p->r[0]);
-    int yi = lround(p->r[1]);
+    int xi = floor(p->r[0]);
+    int yi = floor(p->r[1]);
     int zi = floor(p->r[2]);
 
     // calculate how many times each photon wraps around the boundary conditions
@@ -126,6 +134,9 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
         yi = positive_mod(yi, setup->ny);
     }
 
+    assert(xi >= 0 and xi < setup->nx);
+    assert(yi >= 0 and yi < setup->ny);
+    assert(zi >= 0 and zi < setup->nz);
     DPRINT_INT(xi);
     DPRINT_INT(yi);
     DPRINT_INT(zi);
@@ -135,6 +146,9 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
     p->r[0] = x_wrapped;
     p->r[1] = y_wrapped;
     p->r[2] = z_wrapped;
+    assert(not isnan(x_wrapped));
+    assert(not isnan(y_wrapped));
+    assert(not isnan(z_wrapped));
 
     // CALCULATE PATHLENGTH, ACCOUNTING FOR WRAPPING
     if (is_wrapping) {
@@ -145,6 +159,9 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
         p->pathlength += distance(r_unwrapped, p->r_prev);
     } else {
         p->pathlength += distance(p->r, p->r_prev);
+    }
+    if(isnan(p->pathlength) or isinf(p->pathlength)) {
+        printf("x_wrap_arounds = %d\n y_wrap_arounds = %d\n", x_wrap_arounds, y_wrap_arounds);
     }
     return true;
 }
@@ -165,6 +182,9 @@ static inline void tally_photon(Setup *setup, Result *result, Photon *p, double 
     p->pathlength += distance(p->r, p->r_prev);
     double k = setup->index*2*M_PI/wavelength;
     complex double field_contribution = exp(-I*k*p->pathlength);
+    if (isnan(field_contribution)) {
+        printf("pathlength = %g, k = %g\n", p->pathlength, k);
+    }
     int xi = positive_mod(lround(p->r[0]), setup->nx);
     int yi = positive_mod(lround(p->r[1]), setup->ny);
 
@@ -190,6 +210,10 @@ static inline double distance(double a[3], double b[3]) {
 static inline void interpolate_to_z(Photon *p, double zm) {
 
     double dz = abs((zm - p->r_prev[2])/(p->r[2] - p->r_prev[2]));
+
+    if(isnan(dz) or isinf(dz)) {
+        printf("dz = %g, z1 = %g, z0 = %g\n", dz, p->r[2], p->r_prev[2]);
+    }
 
     double dxdz = p->r[0] - p->r_prev[0];
     double dydz = p->r[1] - p->r_prev[1];
