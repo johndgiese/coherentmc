@@ -40,8 +40,6 @@ static inline int positive_mod(int x, int d);
     #define DPRINT_CDB(str) ;
     #define ASSERT(exp) ;
 #endif
-    
-#define isbad(exp) (isnan(exp) or isinf(exp))
 
 // run the coherent monte carlo simulation
 void run(Setup *setup, Result *result, int np, double wavelength, int seed) {
@@ -77,7 +75,6 @@ static inline Photon *new_photon(Setup *setup) {
 
     p->pathlength = distance(p->r, p->r_prev);
 
-    ASSERT(not isbad(p->pathlength));
     return p;
 }
 
@@ -94,13 +91,10 @@ static inline bool is_reflected(Setup *setup, Photon *p) {
 
 static inline bool propagating_in_sample(Setup *setup, Photon *p) {
 
-    static long double pathlength_prev; // for debuging
-
     // KEEP A RECORD OF THE PREVIOUS LOCATION
     p->r_prev[0] = p->r[0];
     p->r_prev[1] = p->r[1];
     p->r_prev[2] = p->r[2];
-    pathlength_prev = p->pathlength;
 
     // GENERATE A RANDOM DISPLACEMENT
     double displacement[3];
@@ -135,18 +129,12 @@ static inline bool propagating_in_sample(Setup *setup, Photon *p) {
         yi = positive_mod(yi, setup->ny);
     }
 
-    ASSERT(xi >= 0 and xi < setup->nx);
-    ASSERT(yi >= 0 and yi < setup->ny);
-    ASSERT(zi >= 0 and zi < setup->nz);
     double x_wrapped = a4d_get(setup->scatterer_positions, xi, yi, zi, 0);
     double y_wrapped = a4d_get(setup->scatterer_positions, xi, yi, zi, 1);
     double z_wrapped = a4d_get(setup->scatterer_positions, xi, yi, zi, 2);
     p->r[0] = x_wrapped;
     p->r[1] = y_wrapped;
     p->r[2] = z_wrapped;
-    ASSERT(not isnan(x_wrapped));
-    ASSERT(not isnan(y_wrapped));
-    ASSERT(not isnan(z_wrapped));
 
     // CALCULATE PATHLENGTH, ACCOUNTING FOR WRAPPING
     if (is_wrapping) {
@@ -214,3 +202,4 @@ static inline void interpolate_to_z(Photon *p, double zm) {
 static inline int positive_mod(int x, int d) {
     return (x % d + d) % d;
 }
+
