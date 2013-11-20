@@ -12,12 +12,15 @@ if __name__ == "__main__":
     index = 1.4
     wavelength = 100e-6
 
-    np = 3000
+    np = 10000
 
     scatterer_positions = cmcutils.random_scatterer_positions(nx, ny, nz)
     setup = cmc.Setup(scatterer_positions, index)
-    result = cmc.run(setup, np, wavelength)
+    result = cmc.run(setup, np, wavelength, 250)
 
-    result.transmittance
+    print(result.transmittance[0][0].real)
+    print(result.reflectance[0][0].real)
+    print(result.transmittance[0][0].imag)
+    print(result.reflectance[0][0].imag)
 
 

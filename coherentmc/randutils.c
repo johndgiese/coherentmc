@@ -2,9 +2,11 @@
 #define RANDOM_H
 
 #include <stdlib.h>
+#include <iso646.h>
 #include <tgmath.h>
 #include <math.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "./dSFMT/dSFMT.h"
 

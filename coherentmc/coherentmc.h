@@ -18,12 +18,12 @@ typedef struct {
     int nx;
     int ny;
     a2c *reflectance;
-    a2c *transmission;
+    a2c *transmittance;
     double wavelength;
     int np;
 } Result;
 
-void run(Setup* setup, Result* result, int np, double wavelength);
+void run(Setup* setup, Result* result, int np, double wavelength, int seed);
 
 #endif // COHERENTMC_H
 

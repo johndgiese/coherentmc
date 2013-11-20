@@ -124,11 +124,11 @@ class Result(ct.Structure):
 
 libc = ct.cdll.LoadLibrary("./coherentmc/coherentmc.so")
 _run = libc.run
-_run.argtypes = [ct.POINTER(Setup), ct.POINTER(Result), ct.c_int, ct.c_double]
+_run.argtypes = [ct.POINTER(Setup), ct.POINTER(Result), ct.c_int, ct.c_double, ct.c_int]
 _run.restype = ct.c_void_p
 
 
-def run(setup, np, wavelength):
+def run(setup, np, wavelength, seed):
     """
     Calculate the diffuse transmittance and reflection through setup.
 
@@ -136,11 +136,11 @@ def run(setup, np, wavelength):
     object.
     """
     result = Result(setup, wavelength)
-    _run(ct.pointer(setup), ct.pointer(result), np, wavelength)
+    _run(ct.pointer(setup), ct.pointer(result), np, wavelength, seed)
     return result
 
 
-def run_again(setup, result, np):
+def run_again(setup, result, np, seed):
     """
     Run a simulation again adding more photons into a result.
 
@@ -153,5 +153,5 @@ def run_again(setup, result, np):
     Note: You can not change the wavelength after it has been set.
     """
     wavelength = result.wavelength
-    _run(ct.pointer(setup), ct.pointer(result), np, wavelength)
+    _run(ct.pointer(setup), ct.pointer(result), np, wavelength, seed)
     return result
