@@ -71,7 +71,7 @@ static inline Photon *new_photon(Setup *setup) {
 
     p->r[0] = setup->nx/2.0;
     p->r[1] = setup->ny/2.0;
-    p->r[2] = random_distance() + 1;
+    p->r[2] = random_distance();
 
     p->pathlength = distance(p->r, p->r_prev);
 
@@ -171,9 +171,9 @@ static inline void tally_photon(Setup *setup, Result *result, Photon *p, double 
 
     if (photon_is_reflected) {
         a2c_plus_set(result->reflectance, field_contribution, xi, yi);
-        a2c_plus_set(result->incoherent_reflectance, field_contribution, xi, yi);
+        a2c_plus_set(result->incoherent_reflectance, 1, xi, yi);
     } else {
-        a2c_plus_set(result->transmittance, 1, xi, yi);
+        a2c_plus_set(result->transmittance, field_contribution, xi, yi);
         a2c_plus_set(result->incoherent_transmittance, 1, xi, yi);
     }
 }
